@@ -19,7 +19,15 @@
   <form id="cropForm">
     <input type="file" id="pdfFile" accept="application/pdf" /><br>
     <label>Starting Page: <input type="number" id="startingPage" value="1" min="1" /></label><br>
-    <label>Is Duplex: <input type="checkbox" id="isDuplex" checked></label><br>
+    <label>Page Layout: </label>
+    <input type="radio" id="page_no_back" name="page_layout" value="no_back">
+    <label for="page_no_back">No Back Face</label>
+    <input type="radio" id="page_duplex" name="page_layout" value="duplex" checked>
+    <label for="page_duplex">Duplex</label>
+    <input type="radio" id="page_fold_vertical" name="page_layout" value="fold_vertical">
+    <label for="page_fold_vertical">Fold Vertical</label>
+    <input type="radio" id="page_fold_horizontal" name="page_layout" value="fold_horizontal">
+    <label for="page_fold_horizontal">Fold Horizontal</label><br>
     <label>Rows: <input type="number" id="rows" value="1" min="1" /></label><br>
     <label>Columns: <input type="number" id="columns" value="1" min="1" /></label><br>
     <label>Top Margin: <input type="number" id="topMargin" value="0" min="0" /></label><br>

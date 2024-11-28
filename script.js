@@ -196,7 +196,10 @@ cropForm.addEventListener('submit', async (event) => {
     event.preventDefault();
 
     const startingPage = parseInt(document.getElementById('startingPage').value, 10) || 1;
-    const isDuplex = document.getElementById('isDuplex').checked;
+    const isNoBack = document.getElementById('page_no_back').checked;
+    const isDuplex = document.getElementById('page_duplex').checked;
+    const isFoldVertical = document.getElementById('page_fold_vertical').checked;
+    const isFoldHorizontal = document.getElementById('page_fold_horizontal').checked;
     const rows = parseInt(document.getElementById('rows').value, 10);
     const columns = parseInt(document.getElementById('columns').value, 10);
     const topMargin = parseFloat(document.getElementById('topMargin').value);
@@ -231,7 +234,24 @@ cropForm.addEventListener('submit', async (event) => {
                 const y0 = height - topMargin - (row + 1) * (cardHeight + rowMargin);
 
                 // Embed the page and set the cropping area
-                if (isDuplex) {
+                if (isNoBack) {
+                    const embeddedPage = await frontPdf.embedPage(page, {
+                        left: x0,
+                        bottom: y0 + rowMargin,
+                        right: x0 + cardWidth,
+                        top: y0 + cardHeight + rowMargin,
+                    });
+
+                    // Add a new page for each crop
+                    const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
+                    cardPage.drawPage(embeddedPage, {
+                        x: 0,
+                        y: 0,
+                        width: cardWidth,
+                        height: cardHeight,
+                    });
+                }
+                else if (isDuplex) {
                     if (currentPage % 2 === 0) {
                         const embeddedPage = await frontPdf.embedPage(page, {
                             left: x0,
@@ -268,22 +288,77 @@ cropForm.addEventListener('submit', async (event) => {
                         });
                     }
                 }
-                else {
-                    const embeddedPage = await frontPdf.embedPage(page, {
-                        left: x0,
-                        bottom: y0 + rowMargin,
-                        right: x0 + cardWidth,
-                        top: y0 + cardHeight + rowMargin,
-                    });
+                else if(isFoldVertical) {
+                    if (col % 2 === 0) {
+                        const embeddedPage = await frontPdf.embedPage(page, {
+                            left: x0,
+                            bottom: y0 + rowMargin,
+                            right: x0 + cardWidth,
+                            top: y0 + cardHeight + rowMargin,
+                        });
 
-                    // Add a new page for each crop
-                    const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
-                    cardPage.drawPage(embeddedPage, {
-                        x: 0,
-                        y: 0,
-                        width: cardWidth,
-                        height: cardHeight,
-                    });
+                        // Add a new page for each crop
+                        const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
+                        cardPage.drawPage(embeddedPage, {
+                            x: 0,
+                            y: 0,
+                            width: cardWidth,
+                            height: cardHeight,
+                        });
+                    }
+                    else {
+                        const embeddedPage = await backPdf.embedPage(page, {
+                            left: x0,
+                            bottom: y0 + rowMargin,
+                            right: x0 + cardWidth,
+                            top: y0 + cardHeight + rowMargin,
+                        });
+
+                        // Add a new page for each crop
+                        const cardPage = backPdf.addPage([cardWidth, cardHeight]);
+                        cardPage.drawPage(embeddedPage, {
+                            x: 0,
+                            y: 0,
+                            width: cardWidth,
+                            height: cardHeight,
+                        });
+                    }
+                }
+                else if(isFoldHorizontal) {
+                    if (row % 2 === 0) {
+                        const embeddedPage = await frontPdf.embedPage(page, {
+                            left: x0,
+                            bottom: y0 + rowMargin,
+                            right: x0 + cardWidth,
+                            top: y0 + cardHeight + rowMargin,
+                        });
+
+                        // Add a new page for each crop
+                        const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
+                        cardPage.drawPage(embeddedPage, {
+                            x: 0,
+                            y: 0,
+                            width: cardWidth,
+                            height: cardHeight,
+                        });
+                    }
+                    else {
+                        const embeddedPage = await backPdf.embedPage(page, {
+                            left: x0,
+                            bottom: y0 + rowMargin,
+                            right: x0 + cardWidth,
+                            top: y0 + cardHeight + rowMargin,
+                        });
+
+                        // Add a new page for each crop
+                        const cardPage = backPdf.addPage([cardWidth, cardHeight]);
+                        cardPage.drawPage(embeddedPage, {
+                            x: 0,
+                            y: 0,
+                            width: cardWidth,
+                            height: cardHeight,
+                        });
+                    }
                 }
             }
         }
@@ -291,7 +366,7 @@ cropForm.addEventListener('submit', async (event) => {
     }
 
     // Save the cropped PDF
-    if (isDuplex) {
+    if (isDuplex || isFoldVertical || isFoldHorizontal) {
         const frontBytes = await frontPdf.save();
         const backBytes = await backPdf.save();
 
