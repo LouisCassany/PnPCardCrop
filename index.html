@@ -2,54 +2,725 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PnP Card Cropper</title>
-  <style>
-    #previewCanvas {
-      border: 1px solid #000;
-      max-width: 100%;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PnP Card Cropper</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-    #status {
-      margin-top: 10px;
-    }
-  </style>
+        body {
+            font-family: Arial, sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .form-panel {
+            width: 350px;
+            background-color: white;
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid #ddd;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .canvas-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            background-color: #f0f0f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-group input[type="file"],
+        .form-group input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .radio-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .radio-option input[type="radio"] {
+            margin: 0;
+        }
+
+        .radio-option label {
+            margin: 0;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #status {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #495057;
+        }
+
+        .download-links {
+            margin-top: 10px;
+        }
+
+        .download-links a {
+            display: block;
+            margin-bottom: 5px;
+            color: #007bff;
+            text-decoration: none;
+            padding: 5px 0;
+        }
+
+        .download-links a:hover {
+            text-decoration: underline;
+        }
+
+        #previewCanvas {
+            border: 2px solid #333;
+            max-width: calc(100% - 40px);
+            max-height: calc(100% - 40px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            background-color: white;
+        }
+
+        /* #zoomCanvas {
+            position: absolute;
+            border: 2px solid #007bff;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            background-color: white;
+            z-index: 10;
+            display: none;
+        } */
+
+        .canvas-placeholder {
+            color: #888;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        /* Custom scrollbar for form panel */
+        .form-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .form-panel::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .form-panel::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .form-panel::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
 </head>
 
 <body>
-  <h1>PnP Card Cropper</h1>
-  <form id="cropForm">
-    <input type="file" id="pdfFile" accept="application/pdf" /><br>
-    <label>Starting Page: <input type="number" id="startingPage" value="1" min="1" /></label><br>
-    <label>Page Layout: </label>
-    <input type="radio" id="page_no_back" name="page_layout" value="no_back">
-    <label for="page_no_back">No Back Face</label>
-    <input type="radio" id="page_duplex" name="page_layout" value="duplex" checked>
-    <label for="page_duplex">Duplex</label>
-    <input type="radio" id="page_fold_vertical" name="page_layout" value="fold_vertical">
-    <label for="page_fold_vertical">Fold Vertical</label>
-    <input type="radio" id="page_fold_horizontal" name="page_layout" value="fold_horizontal">
-    <label for="page_fold_horizontal">Fold Horizontal</label><br>
-    <label>Rows: <input type="number" id="rows" value="1" min="1" /></label><br>
-    <label>Columns: <input type="number" id="columns" value="1" min="1" /></label><br>
-    <label>Top Margin: <input type="number" id="topMargin" value="0" min="0" /></label><br>
-    <label>Bottom Margin: <input type="number" id="bottomMargin" value="0" min="0" /></label><br>
-    <label>Left Margin: <input type="number" id="leftMargin" value="0" min="0" /></label><br>
-    <label>Right Margin: <input type="number" id="rightMargin" value="0" min="0" /></label><br>
-    <label>Row Margin: <input type="number" id="rowMargin" value="0" min="0" /></label><br>
-    <label>Column Margin: <input type="number" id="columnMargin" value="0" min="0" /></label><br>
-    <button type="submit">Crop PDF</button>
-  </form>
-  <div id="status"></div>
-  <a id="downloadLink" download="cropped.pdf" style="display:none">Download Cropped PDF</a>
-  <a id="downloadFrontLink" download="front.pdf" style="display:none">Download Front PDF</a>
-  <a id="downloadBackLink" download="back.pdf" style="display:none">Download Back PDF</a><br>
-  <canvas id="previewCanvas" width="1080" height="1920"></canvas>
-  <canvas id="zoomCanvas" width="400" height="200"></canvas>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-  <script src="https://mozilla.github.io/pdf.js/build/pdf.mjs" type="module"></script>
-  <script src="script.js"></script>
+    <div class="container">
+        <div class="form-panel">
+            <h1>PnP Card Cropper</h1>
+            <form id="cropForm">
+                <div class="form-group">
+                    <label for="pdfFile">Select PDF File:</label>
+                    <input type="file" id="pdfFile" accept="application/pdf" />
+                </div>
+
+                <div class="form-group">
+                    <label for="startingPage">Starting Page:</label>
+                    <input type="number" id="startingPage" value="1" min="1" />
+                </div>
+
+                <div class="form-group">
+                    <label>Page Layout:</label>
+                    <div class="radio-group">
+                        <div class="radio-option">
+                            <input type="radio" id="page_no_back" name="page_layout" value="no_back">
+                            <label for="page_no_back">No Back Face</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="page_duplex" name="page_layout" value="duplex" checked>
+                            <label for="page_duplex">Duplex</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="page_fold_vertical" name="page_layout" value="fold_vertical">
+                            <label for="page_fold_vertical">Fold Vertical</label>
+                        </div>
+                        <div class="radio-option">
+                            <input type="radio" id="page_fold_horizontal" name="page_layout" value="fold_horizontal">
+                            <label for="page_fold_horizontal">Fold Horizontal</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="rows">Rows:</label>
+                    <input type="number" id="rows" value="1" min="1" />
+                </div>
+
+                <div class="form-group">
+                    <label for="columns">Columns:</label>
+                    <input type="number" id="columns" value="1" min="1" />
+                </div>
+
+                <div class="form-group">
+                    <label for="topMargin">Top Margin:</label>
+                    <input type="number" id="topMargin" value="0" min="0" />
+                </div>
+
+                <div class="form-group">
+                    <label for="bottomMargin">Bottom Margin:</label>
+                    <input type="number" id="bottomMargin" value="0" min="0" />
+                </div>
+
+                <div class="form-group">
+                    <label for="leftMargin">Left Margin:</label>
+                    <input type="number" id="leftMargin" value="0" min="0" />
+                </div>
+
+                <div class="form-group">
+                    <label for="rightMargin">Right Margin:</label>
+                    <input type="number" id="rightMargin" value="0" min="0" />
+                </div>
+
+                <div class="form-group">
+                    <label for="rowMargin">Row Margin:</label>
+                    <input type="number" id="rowMargin" value="0" min="0" />
+                </div>
+
+                <div class="form-group">
+                    <label for="columnMargin">Column Margin:</label>
+                    <input type="number" id="columnMargin" value="0" min="0" />
+                </div>
+
+                <button type="submit">Crop PDF</button>
+
+                <div id="status"></div>
+
+                <div class="download-links">
+                    <a id="downloadLink" download="cropped.pdf" style="display:none">Download Cropped PDF</a>
+                    <a id="downloadFrontLink" download="front.pdf" style="display:none">Download Front PDF</a>
+                    <a id="downloadBackLink" download="back.pdf" style="display:none">Download Back PDF</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="canvas-panel">
+            <canvas id="previewCanvas" width="1080" height="1920"></canvas>
+            <canvas id="zoomCanvas" width="400" height="200"></canvas>
+            <div class="canvas-placeholder" id="canvasPlaceholder">Upload a PDF to see preview</div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+    <script src="https://mozilla.github.io/pdf.js/build/pdf.mjs" type="module"></script>
+    <script>
+        const cropForm = document.getElementById('cropForm');
+        const previewCanvas = document.getElementById('previewCanvas');
+        const zoomCanvas = document.getElementById('zoomCanvas');
+        const pdfStatus = document.getElementById('status');
+        const canvasPlaceholder = document.getElementById('canvasPlaceholder');
+        let pdf = null;
+        let pdfDoc = null;
+        let scale = 1;
+        let pdfRendered = false;
+        let page = null;
+        let previewImage = null;
+        // Zoom variables
+        let startX, startY, zoomX = 0, zoomY = 0;
+        let isDragging = false;
+
+        // Initially hide canvas and show placeholder
+        previewCanvas.style.display = 'none';
+
+        // Load the uploaded PDF using pdf.js
+        document.getElementById('pdfFile').addEventListener('change', async (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                canvasPlaceholder.style.display = 'none';
+                previewCanvas.style.display = 'block';
+
+                const fileReader = new FileReader();
+                fileReader.onload = async function () {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://mozilla.github.io/pdf.js/build/pdf.worker.mjs';
+                    // Load the PDF file using pdf.js for rendering page previews
+                    const pdfData = new Uint8Array(this.result);
+                    const loadingTask = pdfjsLib.getDocument({ data: pdfData });
+                    pdf = await loadingTask.promise;
+
+                    const startingPage = parseInt(document.getElementById('startingPage').value, 10) || 1;
+
+                    // Render the first page of the PDF
+                    await renderPage(pdf, startingPage);
+
+                    // Store the loaded PDF for cropping using PDFLib
+                    const pdfBytes = await file.arrayBuffer();
+                    pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+
+                    // Draw the grid after rendering the PDF
+                    renderPreview();
+                };
+                fileReader.readAsArrayBuffer(file);
+            }
+        });
+
+        document.getElementById('startingPage').addEventListener('input', async (event) => {
+            if (!pdfDoc) return;
+
+            const startingPage = parseInt(event.target.value, 10) || 1;
+            await renderPage(pdf, startingPage);
+            renderPreview();
+        });
+
+        // Add event listeners for live preview updates
+        [
+            'rows', 'columns', 'topMargin', 'bottomMargin',
+            'leftMargin', 'rightMargin', 'rowMargin', 'columnMargin',
+        ].forEach((id) => {
+            document.getElementById(id).addEventListener('input', renderPreview);
+        });
+
+        async function renderPage(pdf, pageNumber) {
+            const page = await pdf.getPage(pageNumber);
+            const viewport = page.getViewport({ scale: 1 });
+
+            const canvasPanel = document.querySelector('.canvas-panel');
+            const maxWidth = canvasPanel.clientWidth - 40;
+            const maxHeight = canvasPanel.clientHeight - 40;
+
+            // Scale factor to fit
+            const fitScale = Math.min(maxWidth / viewport.width, maxHeight / viewport.height);
+            console.log(fitScale);
+
+            // Multiply by a quality factor (2x or 3x for sharper rendering)
+            const qualityFactor = 2;
+            scale = fitScale * qualityFactor;
+
+            const scaledViewport = page.getViewport({ scale: scale });
+
+            // Render at high resolution
+            previewCanvas.width = scaledViewport.width;
+            previewCanvas.height = scaledViewport.height;
+
+            // But visually size it back down
+            previewCanvas.style.width = `${scaledViewport.width / qualityFactor}px`;
+            previewCanvas.style.height = `${scaledViewport.height / qualityFactor}px`;
+
+            const context = previewCanvas.getContext('2d');
+            context.imageSmoothingEnabled = true; // better scaling quality
+            context.imageSmoothingQuality = "high";
+
+            const renderContext = {
+                canvasContext: context,
+                viewport: scaledViewport,
+            };
+            await page.render(renderContext).promise;
+
+            // Store as bitmap
+            previewImage = await createImageBitmap(previewCanvas);
+            pdfRendered = true;
+        }
+
+        // Function to overlay the grid without clearing the PDF
+        async function renderPreview() {
+            if (!pdfRendered) return;
+
+            const rows = parseInt(document.getElementById('rows').value, 10) || 1;
+            const columns = parseInt(document.getElementById('columns').value, 10) || 1;
+            const topMargin = parseFloat(document.getElementById('topMargin').value) || 0;
+            const bottomMargin = parseFloat(document.getElementById('bottomMargin').value) || 0;
+            const leftMargin = parseFloat(document.getElementById('leftMargin').value) || 0;
+            const rightMargin = parseFloat(document.getElementById('rightMargin').value) || 0;
+            const rowMargin = parseFloat(document.getElementById('rowMargin').value) || 0;
+            const columnMargin = parseFloat(document.getElementById('columnMargin').value) || 0;
+
+            const context = previewCanvas.getContext('2d');
+
+            // Clear the canvas and redraw the PDF page
+            context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+            context.drawImage(previewImage, 0, 0);
+
+            // Draw the grid
+            drawGrid(context, rows, columns, topMargin, bottomMargin, leftMargin, rightMargin, rowMargin, columnMargin);
+            // Draw the blue zoom rect
+            // Zoom rect is /4 of the size of the preview canvas because were zooming in 4x
+            drawZoomRect(context, zoomX * 2, zoomY * 2, zoomCanvas.width / 4, zoomCanvas.height / 4);
+
+            // Draw the zoomed in area
+            let zoomCtx = zoomCanvas.getContext("2d");
+
+            const zoomScale = 4 // or 4 depending on how much you want to zoom
+            const srcWidth = zoomCanvas.width / zoomScale;
+            const srcHeight = zoomCanvas.height / zoomScale;
+            const qualityFactor = 2;
+
+            zoomCtx.drawImage(
+                previewCanvas,
+                zoomX * qualityFactor, // source x in high-res canvas
+                zoomY * qualityFactor, // source y
+                srcWidth,  // source width
+                srcHeight, // source height
+                0, 0,
+                zoomCanvas.width,
+                zoomCanvas.height
+            );
+        }
+
+        // Function to draw the grid
+        function drawGrid(context, rows, columns, topMargin, bottomMargin, leftMargin, rightMargin, rowMargin, columnMargin) {
+            context.strokeStyle = 'red';
+            context.lineWidth = 2;
+
+            const cardWidth = (previewCanvas.width - leftMargin * scale - rightMargin * scale - (columns - 1) * columnMargin * scale) / columns;
+            const cardHeight = (previewCanvas.height - topMargin * scale - bottomMargin * scale - (rows - 1) * rowMargin * scale) / rows;
+
+            for (let col = 0; col < columns; col++) {
+                const xStart = leftMargin * scale + col * (cardWidth + columnMargin * scale);
+                const xEnd = xStart + cardWidth;
+
+                context.beginPath();
+                context.moveTo(xStart, topMargin * scale);
+                context.lineTo(xStart, previewCanvas.height - bottomMargin * scale);
+                context.stroke();
+
+                context.beginPath();
+                context.moveTo(xEnd, topMargin * scale);
+                context.lineTo(xEnd, previewCanvas.height - bottomMargin * scale);
+                context.stroke();
+            }
+
+            for (let row = 0; row < rows; row++) {
+                const yStart = topMargin * scale + row * (cardHeight + rowMargin * scale);
+                const yEnd = yStart + cardHeight;
+
+                context.beginPath();
+                context.moveTo(leftMargin * scale, yStart);
+                context.lineTo(previewCanvas.width - rightMargin * scale, yStart);
+                context.stroke();
+
+                context.beginPath();
+                context.moveTo(leftMargin * scale, yEnd);
+                context.lineTo(previewCanvas.width - rightMargin * scale, yEnd);
+                context.stroke();
+            }
+        }
+
+        function drawZoomRect(context, x, y, width, height) {
+            context.strokeStyle = 'blue';
+            context.lineWidth = 1;
+            context.beginPath();
+            context.rect(x, y, width, height);
+            context.stroke();
+        }
+
+        previewCanvas.addEventListener("mousedown", function (e) {
+            isDragging = true;
+            startX = e.offsetX;
+            startY = e.offsetY;
+        });
+
+        previewCanvas.addEventListener("mouseup", function () {
+            isDragging = false;
+        });
+
+        previewCanvas.addEventListener("mousemove", function (e) {
+            if (isDragging) {
+                console.log(e.offsetX, e.offsetY);
+                zoomX += (e.offsetX - startX);
+                zoomY += (e.offsetY - startY);
+                startX = (e.offsetX);
+                startY = (e.offsetY);
+            }
+
+            // zoomCanvas.style.top = e.pageY + 20 + "px"
+            // zoomCanvas.style.left = e.pageX + 20 + "px"
+            // zoomCanvas.style.display = "block";
+
+            renderPreview();
+        });
+
+        previewCanvas.addEventListener("mouseout", function () {
+            //zoomCanvas.style.display = "none";
+            isDragging = false;
+        });
+
+        // Form submission for cropping the PDF
+        cropForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const startingPage = parseInt(document.getElementById('startingPage').value, 10) || 1;
+            const isNoBack = document.getElementById('page_no_back').checked;
+            const isDuplex = document.getElementById('page_duplex').checked;
+            const isFoldVertical = document.getElementById('page_fold_vertical').checked;
+            const isFoldHorizontal = document.getElementById('page_fold_horizontal').checked;
+            const rows = parseInt(document.getElementById('rows').value, 10);
+            const columns = parseInt(document.getElementById('columns').value, 10);
+            const topMargin = parseFloat(document.getElementById('topMargin').value);
+            const bottomMargin = parseFloat(document.getElementById('bottomMargin').value);
+            const leftMargin = parseFloat(document.getElementById('leftMargin').value);
+            const rightMargin = parseFloat(document.getElementById('rightMargin').value);
+            const rowMargin = parseFloat(document.getElementById('rowMargin').value);
+            const columnMargin = parseFloat(document.getElementById('columnMargin').value);
+
+            if (!pdfDoc || !rows || !columns) {
+                alert('Please upload a PDF and set the grid parameters.');
+                return;
+            }
+
+            pdfStatus.textContent = 'Processing...';
+
+            const frontPdf = await PDFLib.PDFDocument.create();
+            const backPdf = await PDFLib.PDFDocument.create();
+
+            const pages = pdfDoc.getPages().slice(startingPage - 1);
+            let currentPage = 0;
+            for (const page of pages) {
+                const { width, height } = page.getSize();
+                const totalRowMargin = rowMargin * (rows - 1);
+                const totalColumnMargin = columnMargin * (columns - 1);
+                const cardWidth = (width - leftMargin - rightMargin - totalColumnMargin) / columns;
+                const cardHeight = (height - topMargin - bottomMargin - totalRowMargin) / rows;
+
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < columns; col++) {
+                        const x0 = leftMargin + col * (cardWidth + columnMargin);
+                        const y0 = height - topMargin - (row + 1) * (cardHeight + rowMargin);
+
+                        // Embed the page and set the cropping area
+                        if (isNoBack) {
+                            const embeddedPage = await frontPdf.embedPage(page, {
+                                left: x0,
+                                bottom: y0 + rowMargin,
+                                right: x0 + cardWidth,
+                                top: y0 + cardHeight + rowMargin,
+                            });
+
+                            // Add a new page for each crop
+                            const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
+                            cardPage.drawPage(embeddedPage, {
+                                x: 0,
+                                y: 0,
+                                width: cardWidth,
+                                height: cardHeight,
+                            });
+                        }
+                        else if (isDuplex) {
+                            if (currentPage % 2 === 0) {
+                                const embeddedPage = await frontPdf.embedPage(page, {
+                                    left: x0,
+                                    bottom: y0 + rowMargin,
+                                    right: x0 + cardWidth,
+                                    top: y0 + cardHeight + rowMargin,
+                                });
+
+                                // Add a new page for each crop
+                                const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
+                                cardPage.drawPage(embeddedPage, {
+                                    x: 0,
+                                    y: 0,
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                });
+                            }
+                            else {
+                                const x0 = leftMargin + ((columns - 1) - col) * (cardWidth + columnMargin);
+                                const embeddedPage = await backPdf.embedPage(page, {
+                                    left: x0,
+                                    bottom: y0 + rowMargin,
+                                    right: x0 + cardWidth,
+                                    top: y0 + cardHeight + rowMargin,
+                                });
+
+                                // Add a new page for each crop
+                                const cardPage = backPdf.addPage([cardWidth, cardHeight]);
+                                cardPage.drawPage(embeddedPage, {
+                                    x: 0,
+                                    y: 0,
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                });
+                            }
+                        }
+                        else if (isFoldVertical) {
+                            if (col % 2 === 0) {
+                                const embeddedPage = await frontPdf.embedPage(page, {
+                                    left: x0,
+                                    bottom: y0 + rowMargin,
+                                    right: x0 + cardWidth,
+                                    top: y0 + cardHeight + rowMargin,
+                                });
+
+                                // Add a new page for each crop
+                                const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
+                                cardPage.drawPage(embeddedPage, {
+                                    x: 0,
+                                    y: 0,
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                });
+                            }
+                            else {
+                                const embeddedPage = await backPdf.embedPage(page, {
+                                    left: x0,
+                                    bottom: y0 + rowMargin,
+                                    right: x0 + cardWidth,
+                                    top: y0 + cardHeight + rowMargin,
+                                });
+
+                                // Add a new page for each crop
+                                const cardPage = backPdf.addPage([cardWidth, cardHeight]);
+                                cardPage.drawPage(embeddedPage, {
+                                    x: 0,
+                                    y: 0,
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                });
+                            }
+                        }
+                        else if (isFoldHorizontal) {
+                            if (row % 2 === 0) {
+                                const embeddedPage = await frontPdf.embedPage(page, {
+                                    left: x0,
+                                    bottom: y0 + rowMargin,
+                                    right: x0 + cardWidth,
+                                    top: y0 + cardHeight + rowMargin,
+                                });
+
+                                // Add a new page for each crop
+                                const cardPage = frontPdf.addPage([cardWidth, cardHeight]);
+                                cardPage.drawPage(embeddedPage, {
+                                    x: 0,
+                                    y: 0,
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                });
+                            }
+                            else {
+                                const embeddedPage = await backPdf.embedPage(page, {
+                                    left: x0,
+                                    bottom: y0 + rowMargin,
+                                    right: x0 + cardWidth,
+                                    top: y0 + cardHeight + rowMargin,
+                                });
+
+                                // Add a new page for each crop
+                                const cardPage = backPdf.addPage([cardWidth, cardHeight]);
+                                cardPage.drawPage(embeddedPage, {
+                                    x: 0,
+                                    y: 0,
+                                    width: cardWidth,
+                                    height: cardHeight,
+                                });
+                            }
+                        }
+                    }
+                }
+                currentPage++;
+            }
+
+            // Save the cropped PDF
+            if (isDuplex || isFoldVertical || isFoldHorizontal) {
+                const frontBytes = await frontPdf.save();
+                const backBytes = await backPdf.save();
+
+                // Create a download link
+                const frontBlob = new Blob([frontBytes], { type: 'application/pdf' });
+                const frontUrl = URL.createObjectURL(frontBlob);
+
+                const frontLink = document.getElementById('downloadFrontLink');
+                frontLink.href = frontUrl;
+                frontLink.download = 'front_cards.pdf';
+                frontLink.textContent = 'Download Front PDF';
+                frontLink.style.display = 'block';
+
+                const backBlob = new Blob([backBytes], { type: 'application/pdf' });
+                const backUrl = URL.createObjectURL(backBlob);
+
+                const backLink = document.getElementById('downloadBackLink');
+                backLink.href = backUrl;
+                backLink.download = 'back_cards.pdf';
+                backLink.textContent = 'Download Back PDF';
+                backLink.style.display = 'block';
+
+                pdfStatus.textContent = 'Done! Click the links to download your files.';
+            }
+            else {
+                const outputBytes = await frontPdf.save();
+
+                // Create a download link
+                const blob = new Blob([outputBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+
+                const link = document.getElementById('downloadLink');
+                link.href = url;
+                link.download = 'cropped_cards.pdf';
+                link.textContent = 'Download Cropped PDF';
+                link.style.display = 'block';
+
+                pdfStatus.textContent = 'Done! Click the link to download your file.';
+            }
+        });
+    </script>
 </body>
 
 </html>
