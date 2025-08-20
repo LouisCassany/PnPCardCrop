@@ -407,16 +407,28 @@
 
             // Draw the zoomed in area
             let zoomCtx = zoomCanvas.getContext("2d");
-            zoomCtx.fillStyle = "white";
-            zoomCtx.fillRect(0, 0, zoomCanvas.width, zoomCanvas.height);
-            // 4x zoom
-            zoomCtx.drawImage(previewCanvas, zoomX, zoomY, 100, 100, 0, 0, 400, 400);
+
+            const zoomScale = 4 // or 4 depending on how much you want to zoom
+            const srcWidth = zoomCanvas.width / zoomScale;
+            const srcHeight = zoomCanvas.height / zoomScale;
+            const qualityFactor = 1;
+
+            zoomCtx.drawImage(
+                previewCanvas,
+                zoomX * qualityFactor, // source x in high-res canvas
+                zoomY * qualityFactor, // source y
+                srcWidth,  // source width
+                srcHeight, // source height
+                0, 0,
+                zoomCanvas.width,
+                zoomCanvas.height
+            );
         }
 
         // Function to draw the grid
         function drawGrid(context, rows, columns, topMargin, bottomMargin, leftMargin, rightMargin, rowMargin, columnMargin) {
             context.strokeStyle = 'red';
-            context.lineWidth = 1;
+            context.lineWidth = 2;
 
             const cardWidth = (previewCanvas.width - leftMargin * scale - rightMargin * scale - (columns - 1) * columnMargin * scale) / columns;
             const cardHeight = (previewCanvas.height - topMargin * scale - bottomMargin * scale - (rows - 1) * rowMargin * scale) / rows;
