@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,11 +10,13 @@
       border: 1px solid #000;
       max-width: 100%;
     }
+
     #status {
       margin-top: 10px;
     }
   </style>
 </head>
+
 <body>
   <h1>PnP Card Cropper</h1>
   <form id="cropForm">
@@ -43,9 +46,10 @@
   <a id="downloadFrontLink" download="front.pdf" style="display:none">Download Front PDF</a>
   <a id="downloadBackLink" download="back.pdf" style="display:none">Download Back PDF</a><br>
   <canvas id="previewCanvas" width="1080" height="1920"></canvas>
-  <canvas id="zoomCanvas" width="400" height="200" style="position:absolute; top:0; left:0; display:none"></canvas>
+  <canvas id="zoomCanvas" width="400" height="200"></canvas>
   <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
   <script src="https://mozilla.github.io/pdf.js/build/pdf.mjs" type="module"></script>
   <script src="script.js"></script>
 </body>
+
 </html>
